@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.pdf
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Environment
+.env
+.env.local
+venv/
+.venv/
+
+# Logs
+*.log
+backend/eval/logs/*.jsonl
+!backend/eval/logs/.gitkeep
+
+# Data
+uploads/*
+uploads/
+!uploads/.gitkeep
+data/
+!data/.gitkeep
+chroma_data/
+output/
+pdf/
+*.db
+*.csv
+benchmark/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+test_oureval_full.py
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node
+node_modules/
+frontend/dist/
+
+# OS
+.DS_Store
+Thumbs.db
