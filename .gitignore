@@ -31,6 +31,7 @@ venv/
 *.log
 backend/eval/logs/*.jsonl
 !backend/eval/logs/.gitkeep
+backend/eval/reports/
 
 # Data
 uploads/*

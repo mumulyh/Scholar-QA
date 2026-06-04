@@ -22,7 +22,7 @@ ScholarQA 是一个面向论文初学者的轻量级 Agentic RAG 系统。用户
 - Streamlit
 - ChromaDB 本地持久化
 - PyMuPDF
-- sentence-transformers/all-MiniLM-L6-v2
+- BAAI/bge-m3
 - OpenAI 兼容 LLM 接口
 - LangGraph，仅用于多篇论文 QA 分支
 
@@ -74,6 +74,40 @@ run.bat
 
 左侧上传 PDF，点击“解析并索引”，完成后即可在主界面提问、翻译或进行多篇论文 QA。
 
+## 环境变量
+
+主要配置见 `.env.example`：
+
+```env
+LLM_BASE_URL=https://api.openai.com/v1
+LLM_API_KEY=sk-your-api-key
+LLM_MODEL=gpt-4o-mini
+LLM_TEMPERATURE=0.2
+LLM_MAX_TOKENS=2048
+COMPARE_MAX_TOKENS=4096
+
+EMBEDDING_MODEL=BAAI/bge-m3
+HF_ENDPOINT=https://hf-mirror.com
+CHROMA_DIR=./chroma_data
+CHROMA_COLLECTION=scholarqa_papers_bge_m3
+TOP_K=6
+RRF_K=60
+RERANKER_MODEL=
+DEBUG_RETRIEVAL=0
+
+UPLOAD_DIR=./uploads
+OUTPUT_DIR=./output
+HOST=0.0.0.0
+PORT=8000
+SCHOLARQA_API_URL=http://127.0.0.1:8000
+```
+
+说明：
+
+- `COMPARE_MAX_TOKENS`：多篇论文综合回答更长，单独设置输出上限。
+- `RERANKER_MODEL`：可选 CrossEncoder reranker，例如 `BAAI/bge-reranker-base`。
+- `DEBUG_RETRIEVAL=1`：返回多篇论文对比时的检索调试信息。
+- `HF_ENDPOINT=https://hf-mirror.com`：国内网络环境下下载 HuggingFace 模型更稳定。
 
 ## 项目结构
 
@@ -152,6 +186,21 @@ MultiPaperCompareGraph
 - **compare mode**：适合“对比这几篇论文的方法、实验、局限性”。
 - **overview mode**：适合“这三篇分别讲什么”“每篇论文讲什么”。该模式会优先读取每篇论文的 Abstract、Introduction、Method、Experiment、Conclusion 等代表性片段，再生成导读式总结。
 
+## API 简表
+
+### 健康检查
+
+```http
+GET /health
+```
+
+### 上传论文
+
+```http
+POST /upload
+```
+
+上传 PDF，解析文本，构建 parent-child 节点，并写入 ChromaDB。
 
 ### 单篇问答
 

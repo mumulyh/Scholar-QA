@@ -45,6 +45,7 @@ class RetrievedChunk:
     score: float
     parent_id: str
     child_id: str
+    metadata: dict[str, Any]
 
     def as_dict(self) -> dict[str, Any]:
         """Convert the chunk to a JSON-serializable dictionary.
@@ -64,6 +65,7 @@ class RetrievedChunk:
             "score": self.score,
             "parent_id": self.parent_id,
             "child_id": self.child_id,
+            "metadata": self.metadata,
         }
 
 
@@ -453,6 +455,26 @@ class ChromaRetriever:
         """
         await asyncio.to_thread(self._add_document_sync, paper_id, chunks)
 
+    def register_document_nodes(self, paper_id: str, chunks: list[PaperNode]) -> None:
+        """Register paper nodes for search without rewriting vector embeddings.
+
+        Use this when a persistent Chroma collection has already been built and a
+        diagnostic or evaluation run only needs the in-memory BM25 and parent-child
+        maps restored from exported paper data.
+        """
+        if not chunks:
+            return
+
+        self._drop_paper_from_memory(paper_id)
+        for child_node in chunks:
+            self._child_nodes_by_id[child_node.node_id] = child_node
+            parent_node_id = child_node.parent_id
+            if parent_node_id:
+                self._parent_nodes_by_id[parent_node_id] = self._parent_from_child(
+                    child_node
+                )
+        self._bm25_indexes[paper_id] = BM25Index(chunks)
+
     async def search(
         self,
         query: str,
@@ -470,6 +492,24 @@ class ChromaRetriever:
             Retrieved parent chunks with source metadata.
         """
         return await asyncio.to_thread(self._search_sync, query, paper_id, top_k)
+
+    async def rerank_chunks(
+        self,
+        query: str,
+        chunks: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """Rerank an arbitrary candidate chunk pool with the CrossEncoder.
+
+        Args:
+            query: User query or compact retrieval intent.
+            chunks: Candidate parent chunks to rerank.
+
+        Returns:
+            Reranked chunks when a reranker is configured; otherwise the original list.
+        """
+        if not self._reranker or not chunks:
+            return chunks
+        return await asyncio.to_thread(self._rerank_parents, query, chunks)
 
     def _add_document_sync(self, paper_id: str, chunks: list[PaperNode]) -> None:
         if not chunks:
@@ -569,6 +609,7 @@ class ChromaRetriever:
                     score=fused_score,
                     parent_id=parent_id,
                     child_id=child_id,
+                    metadata=parent_node.metadata,
                 ).as_dict()
             )
             if len(retrieved_chunks) >= max(top_k * 2, top_k):

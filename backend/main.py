@@ -38,7 +38,7 @@ CHROMA_DIR = _env_path("CHROMA_DIR", PROJECT_ROOT / "chroma_data")
 COLLECTION_NAME = os.getenv("CHROMA_COLLECTION", "scholarqa_papers")
 EMBEDDING_MODEL = os.getenv(
     "EMBEDDING_MODEL",
-    "sentence-transformers/all-MiniLM-L6-v2",
+    "BAAI/bge-m3",
 )
 TOP_K = int(os.getenv("TOP_K", "6"))
 RRF_K = int(os.getenv("RRF_K", "60"))

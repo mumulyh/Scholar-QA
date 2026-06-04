@@ -101,6 +101,7 @@ class PaperNodeBuilder:
             block_id = block["block_id"]
             node_type = self._guess_node_type(text, section)
             parent_node_id = f"{paper_id}:{block_id}:parent"
+            block_metadata = self._block_metadata(block)
             parent_node = PaperNode(
                 node_id=parent_node_id,
                 paper_id=paper_id,
@@ -119,7 +120,7 @@ class PaperNodeBuilder:
                 order=order,
                 section_path=[section] if section else [],
                 parent_id=None,
-                metadata={"source": "parent"},
+                metadata={"source": "parent", **block_metadata},
             )
             parent_nodes.append(parent_node)
 
@@ -145,6 +146,7 @@ class PaperNodeBuilder:
                     metadata={
                         "source": "child",
                         "child_index": child_index,
+                        **block_metadata,
                     },
                 )
                 child_nodes.append(child_node)
@@ -166,6 +168,14 @@ class PaperNodeBuilder:
                 text,
             ]
         )
+
+    def _block_metadata(self, block: dict[str, Any]) -> dict[str, Any]:
+        """Copy parser metadata that should survive parent-child splitting."""
+        metadata: dict[str, Any] = {}
+        source_block_ids = block.get("source_block_ids")
+        if isinstance(source_block_ids, list) and source_block_ids:
+            metadata["source_block_ids"] = [str(block_id) for block_id in source_block_ids]
+        return metadata
 
     def _split_child_text(self, text: str) -> list[str]:
         if len(text) <= self._child_max_chars:
